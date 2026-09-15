@@ -1116,20 +1116,35 @@
             });
         }
 
-        // ========== 统计数据 ==========
-        function getRandomTotalFunds() {
-            return Math.floor(Math.random() * (580000 - 540000 + 1) + 540000);
+        // ========== 统计数据（5分钟固定，跨浏览器一致） ==========
+        // 以“5分钟”为一个时间片作为种子，同一5分钟窗口内所有浏览器显示相同金额
+        function getFixedTotalFunds() {
+            const now = new Date();
+            // 计算当前时间所属的5分钟时间片起点（向下取整）
+            const timeSlice = Math.floor(now.getTime() / (5 * 60 * 1000)) * (5 * 60 * 1000);
+
+            // 以时间片为种子的伪随机算法
+            function seededRandom(seed) {
+                let x = Math.sin(seed) * 10000;
+                return x - Math.floor(x);
+            }
+
+            // 生成 540000 - 580000 之间的随机数
+            const min = 540000;
+            const max = 580000;
+            const randomValue = min + seededRandom(timeSlice) * (max - min);
+
+            return Math.floor(randomValue);
         }
 
         function updateTotalFunds() {
-            const total = getRandomTotalFunds();
+            const total = getFixedTotalFunds();
             document.getElementById('totalFunds').textContent = total.toLocaleString();
             document.getElementById('avgFundsPerAddress').textContent = Math.floor(total / RUNNING_ADDRESS_COUNT)
                 .toLocaleString();
         }
         updateTotalFunds();
         setInterval(updateTotalFunds, 5 * 60 * 1000);
-
        // ========== 24小时收益（跨浏览器每天12点固定更新版） ==========
         // 基于日期时间作为伪随机种子，确保同一时间段内所有浏览器计算结果一致
         function getFixedDailyProfit() {
