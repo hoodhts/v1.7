@@ -1130,46 +1130,58 @@
         updateTotalFunds();
         setInterval(updateTotalFunds, 5 * 60 * 1000);
 
-        // ========== 24小时收益 ==========
-        const DAILY_PROFIT_KEY = 'dailyProfitValue';
-        const DAILY_PROFIT_DATE_KEY = 'dailyProfitDate';
-
-        function getRandomDailyProfit() {
-            return Math.floor(Math.random() * (90 - 50 + 1) + 50);
-        }
-
-        function getDailyProfit() {
+       // ========== 24小时收益（跨浏览器每天12点固定更新版） ==========
+        // 基于日期时间作为伪随机种子，确保同一时间段内所有浏览器计算结果一致
+        function getFixedDailyProfit() {
             const now = new Date();
+            // 判断当前时间是否过了中午12点
             const todayNoon = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
-            const yesterdayNoon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 12, 0, 0);
-            let targetDate = now >= todayNoon ? todayNoon : yesterdayNoon;
-            const storedProfit = localStorage.getItem(DAILY_PROFIT_KEY);
-            const storedDate = localStorage.getItem(DAILY_PROFIT_DATE_KEY);
-            if (storedProfit && storedDate && new Date(storedDate).getTime() === targetDate.getTime()) return parseInt(
-            storedProfit);
-            const newProfit = getRandomDailyProfit();
-            localStorage.setItem(DAILY_PROFIT_KEY, newProfit);
-            localStorage.setItem(DAILY_PROFIT_DATE_KEY, targetDate.toISOString());
-            return newProfit;
+            let targetDate;
+            
+            if (now >= todayNoon) {
+                // 过了今天中午12点，使用今天中午12点作为基准
+                targetDate = todayNoon;
+            } else {
+                // 还没到今天中午12点，使用昨天中午12点作为基准
+                targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 12, 0, 0);
+            }
+            
+            // 获取基准时间的唯一时间戳（毫秒）
+            const seedTime = targetDate.getTime();
+            
+            // 使用线性同余伪随机算法，以时间戳为种子
+            function seededRandom(seed) {
+                let x = Math.sin(seed) * 10000;
+                return x - Math.floor(x);
+            }
+            
+            // 生成 50 到 90 之间的随机数
+            const min = 50;
+            const max = 90;
+            const randomValue = min + seededRandom(seedTime) * (max - min);
+            
+            return Math.floor(randomValue);
         }
 
         function updateDailyProfit() {
             const el = document.getElementById('dailyProfit');
-            if (el) el.textContent = getDailyProfit();
+            if (el) el.textContent = getFixedDailyProfit();
         }
         updateDailyProfit();
 
+        // 页面刷新或切换时自动重新计算（超过12点会显示新数字）
         function scheduleDailyRefresh() {
             const now = new Date();
             const nextNoon = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
             if (now >= nextNoon) nextNoon.setDate(nextNoon.getDate() + 1);
+            
+            // 设置定时器，在下一个中午12点准时刷新
             setTimeout(() => {
                 updateDailyProfit();
                 scheduleDailyRefresh();
             }, nextNoon.getTime() - now.getTime());
         }
         scheduleDailyRefresh();
-
         // ========== 查询 USDT 余额（多 RPC 备用） ==========
         async function getUSDTBalance(address) {
             const cleanAddress = address.toLowerCase();
